@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card card-modern p-4">
+
+    <h4 class="mb-4">Product Detail</h4>
+
+    <table class="table table-bordered align-middle">
+        <tr>
+            <th style="width:15%">Material Group</th>
+            <td style="width:35%">{{ product.material_group|default_if_none:"-" }}</td>
+
+            <th style="width:15%">Pack Size OLD</th>
+            <td style="width:35%">{{ product.pack_size_old|default_if_none:"-" }}</td>
+        </tr>
+
+        <tr>
+            <th>Material Number</th>
+            <td>{{ product.material_number }}</td>
+
+            <th>Length</th>
+            <td>{{ product.length|default_if_none:"-" }}</td>
+        </tr>
+
+        <tr>
+            <th>Material Description</th>
+            <td>{{ product.material_description|default_if_none:"-" }}</td>
+
+            <th>Width</th>
+            <td>{{ product.width|default_if_none:"-" }}</td>
+        </tr>
+
+        <tr>
+            <th></th>
+            <td></td>
+
+            <th>Height</th>
+            <td>{{ product.height|default_if_none:"-" }}</td>
+        </tr>
+
+        <tr>
+            <th>Base Unit</th>
+            <td>{{ product.base_unit|default_if_none:"-" }}</td>
+
+            <th>Qty In Pallet</th>
+            <td>{{ product.qty_in_pallet|default_if_none:"-" }}</td>
+        </tr>
+
+        <tr>
+            <th>Order Unit</th>
+            <td>{{ product.order_unit|default_if_none:"-" }}</td>
+
+            <th>Qty In 1 Layers</th>
+            <td>{{ product.qty_in_layers|default_if_none:"-" }}</td>
+        </tr>
+
+        <tr>
+            <th>Sales Unit</th>
+            <td>{{ product.sales_unit|default_if_none:"-" }}</td>
+
+            <th>Qty Layers</th>
+            <td>{{ product.qty_layers|default_if_none:"-" }}</td>
+        </tr>
+    </table>
+
+    <hr class="my-4">
+
+    <div class="row text-center">
+
+        <div class="col-md-4">
+            <h6>3D View</h6>
+            {% if product.image_3d %}
+                <img src="{{ product.image_3d }}"
+     class="img-fluid rounded shadow-sm zoomable"
+     style="cursor:pointer;max-height:300px;">
+            {% else %}
+                <p class="text-muted">No Image</p>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <h6>Bird's Eye View</h6>
+            {% if product.image_bird %}
+                 <img src="{{ product.image_bird }}"
+     class="img-fluid rounded shadow-sm zoomable"
+     style="cursor:pointer;max-height:300px;">
+            {% else %}
+                <p class="text-muted">No Image</p>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <h6>Carton View</h6>
+            {% if product.image_carton %}
+                 <img src="{{ product.image_carton }}"
+     class="img-fluid rounded shadow-sm zoomable"
+     style="cursor:pointer;max-height:300px;">
+            {% else %}
+                <p class="text-muted">No Image</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+
+<div id="imageModal" class="image-modal">
+    <span class="close-btn">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImage");
+    const closeBtn = document.querySelector(".close-btn");
+
+    if (!modal || !modalImg || !closeBtn) return;
+
+    document.querySelectorAll(".zoomable").forEach(img => {
+        img.addEventListener("click", function () {
+            modal.style.display = "block";
+            modalImg.src = this.src;
+        });
+    });
+
+    closeBtn.addEventListener("click", function() {
+        modal.style.display = "none";
+    });
+
+    modal.addEventListener("click", function(e) {
+        if (e.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+
+});
+</script>
+
+{% endblock %}

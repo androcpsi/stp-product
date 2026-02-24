@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card card-modern p-4">
+    <h3>Welcome 👋</h3>
+    <p class="text-muted">Selamat datang di Standard Palleting Product System</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="summary-card text-center">
+            <h5>Total Product</h5>
+            <h2 class="mt-3">{{ products.count }}</h2>
+        </div>
+    </div>
+</div>
+{% endblock %}

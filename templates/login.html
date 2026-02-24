@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>STP Product - Login</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+    body {
+        background-color: #f4f6f9;
+    }
+
+    .login-wrapper {
+        height: 100vh;
+    }
+
+    .login-left {
+        background-color: #1f3b73;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 60px;
+    }
+
+    .login-right {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-card {
+        width: 380px;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        padding: 40px;
+        background: white;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        height: 44px;
+    }
+
+    .btn-login {
+        background-color: #1f3b73;
+        border: none;
+        height: 44px;
+        border-radius: 8px;
+    }
+
+    .btn-login:hover {
+        background-color: #162c57;
+    }
+
+    .brand-title {
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .brand-subtitle {
+        opacity: 0.85;
+    }
+
+    @media (max-width: 768px) {
+    .login-left {
+        display: none;
+    }
+}
+</style>
+
+</head>
+<body>
+
+<div class="container-fluid login-wrapper">
+    <div class="row h-100">
+
+        <!-- LEFT SIDE -->
+        <div class="col-md-6 login-left d-none d-md-flex">
+            <div>
+                <div class="brand-title">STP Product</div>
+                <div class="brand-subtitle mt-2">
+                    Palleting Product Management System
+                </div>
+                <hr class="my-4 bg-light">
+                <p>
+                    Corporate internal system for product configuration,
+                    pallet calculation and warehouse documentation.
+                </p>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="col-md-6 login-right">
+            <div class="login-card">
+
+                <h5 class="mb-4 text-center">Sign In</h5>
+
+                {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+                <form method="post">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="text" name="email" class="form-control" required>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required>
+    </div>
+
+    <button type="submit" class="btn btn-login w-100 text-white">
+        Login
+    </button>
+</form>
+
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

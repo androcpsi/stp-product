@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card card-modern p-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">List Product</h4>
+
+        <!-- SEARCH KANAN -->
+        <form method="get" class="d-flex justify-content-end mb-3">
+    <div class="input-group" style="max-width: 300px;">
+        <input type="text" 
+               name="search" 
+               class="form-control" 
+               placeholder="Search..."
+               value="{{ request.GET.search }}">
+
+        <button class="btn btn-primary" type="submit">
+            🔍
+        </button>
+    </div>
+</form>
+
+    </div>
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width:20%">Material</th>
+                <th>Material Description</th>
+                <th>Material Group</th>
+                <th style="width:120px" class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products %}
+            <tr>
+                <td class="fw-semibold">{{ p.material_number }}</td>
+                <td>{{ p.material_description }}</td>
+                <td>{{ p.material_group }}</td>
+                <td class="text-center">
+    <div class="d-flex justify-content-center gap-2">
+        <a href="{% url 'product_detail' p.id %}"
+           class="btn btn-sm btn-primary rounded-pill px-3">
+            <i class="bi bi-eye"></i> View
+        </a>
+
+        <a href="{% url 'edit_product' p.id %}"
+           class="btn btn-sm btn-warning rounded-pill px-3">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+    </div>
+</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center text-muted py-4">
+                    No product found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}
