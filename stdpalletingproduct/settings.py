@@ -26,9 +26,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-0oga47u*#uj-s$vdvz!es1m=a2(iy%5z%_4v21mq1uhew-po+f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 DATABASE_ROUTERS = ['core.db_router.OracleRouter']
 
