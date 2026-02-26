@@ -1,49 +1,57 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.db.models import Q
-from .forms import ProductForm
-from oracle_models.models import MstUser , CoreProduct
-from ldap3 import Server, Connection, ALL, SUBTREE
-import os
-from django.db import transaction
-from services.upload_service import upload_to_api
 from django.http import JsonResponse
-from django.db import connections
-from django.db.models.functions import Upper
+from django.db.models import Q
+from ldap3 import Server, Connection
 from services.upload_service import upload_to_api
+from services.oracle_service import get_connection
 
 
+# ================================
+# LOGIN
+# ================================
 def login_view(request):
 
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
 
-        # 1️⃣ cek ke Oracle dulu
+        # 1️⃣ cek user ke Oracle (RAW QUERY)
         try:
-            oracle_user = MstUser.objects.get(email=email, status=1)
-        except MstUser.DoesNotExist:
-            messages.error(request, "User tidak terdaftar di sistem.")
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT id, email, role
+                FROM mst_user
+                WHERE email = :1 
+            """, [email])
+
+            row = cursor.fetchone()
+            cursor.close()
+            conn.close()
+
+            if not row:
+                messages.error(request, "User tidak terdaftar di sistem.")
+                return redirect('login')
+
+        except Exception as e:
+            messages.error(request, f"Error database: {str(e)}")
             return redirect('login')
 
-        # 2️⃣ cek AD langsung
+        # 2️⃣ cek AD
         server = Server('10.100.5.116', port=389)
 
         try:
-            conn = Connection(
-                server,
-                user=email,
-                password=password,
-                auto_bind=True
-            )
+            Connection(server, user=email, password=password, auto_bind=True)
         except:
             messages.error(request, "Username atau password salah.")
             return redirect('login')
 
         # 3️⃣ set session
-        request.session['user_id'] = oracle_user.id
-        request.session['email'] = oracle_user.email
-        request.session['role'] = oracle_user.role
+        request.session['user_id'] = row[0]
+        request.session['email'] = row[1]
+        request.session['role'] = row[2]
 
         return redirect('dashboard')
 
@@ -51,7 +59,7 @@ def login_view(request):
 
 
 # ================================
-# CUSTOM LOGOUT
+# LOGOUT
 # ================================
 def logout_view(request):
     request.session.flush()
@@ -59,7 +67,7 @@ def logout_view(request):
 
 
 # ================================
-# CUSTOM LOGIN REQUIRED DECORATOR
+# CUSTOM LOGIN REQUIRED
 # ================================
 def custom_login_required(view_func):
     def wrapper(request, *args, **kwargs):
@@ -73,9 +81,29 @@ def custom_login_required(view_func):
 # DASHBOARD
 # ================================
 @custom_login_required
+@custom_login_required
 def dashboard(request):
-    products = CoreProduct.objects.using('oracle_prod').all()
-    return render(request, 'dashboard.html', {'products': products})
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Ambil data product (kalau memang masih perlu)
+    cursor.execute("SELECT * FROM core_product")
+    columns = [col[0].lower() for col in cursor.description]
+    rows = cursor.fetchall()
+    products = [dict(zip(columns, row)) for row in rows]
+
+    # Hitung total langsung dari DB
+    cursor.execute("SELECT COUNT(*) FROM core_product")
+    total_product = cursor.fetchone()[0]
+
+    cursor.close()
+    conn.close()
+
+    return render(request, 'dashboard.html', {
+        'products': products,
+        'total_product': total_product
+    })
 
 
 # ================================
@@ -85,55 +113,70 @@ def dashboard(request):
 def config_product(request):
 
     if request.method == 'POST':
+
         try:
-            with transaction.atomic(using='oracle_prod'):
+            conn = get_connection()
+            cursor = conn.cursor()
 
-                image_3d = None
-                image_bird = None
-                image_carton = None
+            image_3d = upload_to_api(request.FILES['image_3d']) if request.FILES.get('image_3d') else None
+            image_bird = upload_to_api(request.FILES['image_bird']) if request.FILES.get('image_bird') else None
+            image_carton = upload_to_api(request.FILES['image_carton']) if request.FILES.get('image_carton') else None
 
-                # Upload gambar jika ada
-                if request.FILES.get('image_3d'):
-                    image_3d = upload_to_api(request.FILES['image_3d'])
-
-                if request.FILES.get('image_bird'):
-                    image_bird = upload_to_api(request.FILES['image_bird'])
-
-                if request.FILES.get('image_carton'):
-                    image_carton = upload_to_api(request.FILES['image_carton'])
-
-                # Simpan ke Oracle
-                CoreProduct.objects.using('oracle_prod').create(
-                    material_group=request.POST.get('material_group'),
-                    material_number=request.POST.get('material_number'),
-                    material_description=request.POST.get('material_description'),
-                    pack_size_old=request.POST.get('pack_size_old'),
-                    base_unit=request.POST.get('base_unit'),
-                    order_unit=request.POST.get('order_unit'),
-                    sales_unit=request.POST.get('sales_unit'),
-
-                    length=request.POST.get('length') or None,
-                    width=request.POST.get('width') or None,
-                    height=request.POST.get('height') or None,
-
-                    qty_in_pallet=request.POST.get('qty_in_pallet') or None,
-                    qty_in_layers=request.POST.get('qty_in_layers') or None,
-                    qty_layers=request.POST.get('qty_layers') or None,
-
-                    image_3d=image_3d,
-                    image_bird=image_bird,
-                    image_carton=image_carton,
+            cursor.execute("""
+                INSERT INTO core_product (
+                    material_group,
+                    material_number,
+                    material_description,
+                    pack_size_old,
+                    base_unit,
+                    order_unit,
+                    sales_unit,
+                    length,
+                    width,
+                    height,
+                    qty_in_pallet,
+                    qty_in_layers,
+                    qty_layers,
+                    image_3d,
+                    image_bird,
+                    image_carton
                 )
+                VALUES (
+                    :1,:2,:3,:4,:5,:6,:7,
+                    :8,:9,:10,
+                    :11,:12,:13,
+                    :14,:15,:16
+                )
+            """, [
+                request.POST.get('material_group'),
+                request.POST.get('material_number'),
+                request.POST.get('material_description'),
+                request.POST.get('pack_size_old'),
+                request.POST.get('base_unit'),
+                request.POST.get('order_unit'),
+                request.POST.get('sales_unit'),
+                request.POST.get('length') or None,
+                request.POST.get('width') or None,
+                request.POST.get('height') or None,
+                request.POST.get('qty_in_pallet') or None,
+                request.POST.get('qty_in_layers') or None,
+                request.POST.get('qty_layers') or None,
+                image_3d,
+                image_bird,
+                image_carton
+            ])
 
-            messages.success(request, "Data dan gambar berhasil disimpan.")
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            messages.success(request, "Data berhasil disimpan.")
             return redirect('list_product')
 
         except Exception as e:
             messages.error(request, f"Gagal simpan: {str(e)}")
 
-    return render(request, 'config_product.html', {
-    "is_edit": False
-})
+    return render(request, 'config_product.html', {"is_edit": False})
 
 
 # ================================
@@ -142,23 +185,40 @@ def config_product(request):
 @custom_login_required
 def list_product(request):
 
-    search_query = request.GET.get('search')
+    search = request.GET.get('search')
 
-    products = CoreProduct.objects.using('oracle_prod').all()
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    if search_query:
-        products = products.filter(
-            Q(material_number__icontains=search_query) |
-            Q(material_description__icontains=search_query.upper()) |
-            Q(material_group__icontains=search_query.upper())
-        )
+    if search:
+        cursor.execute("""
+SELECT id, material_number, material_description, material_group
+FROM core_product
+WHERE UPPER(material_number) LIKE UPPER(:search)
+OR UPPER(material_description) LIKE UPPER(:search)
+OR UPPER(material_group) LIKE UPPER(:search)
+""", {"search": f"%{search}%"})
+    else:
+        cursor.execute("""
+            SELECT id, material_number, material_description, material_group
+            FROM core_product
+        """)
 
-    context = {
-        'products': products,
-        'search_query': search_query
-    }
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
 
-    return render(request, 'list_product.html', context)
+    products = [
+        {
+            "id": r[0],
+            "material_number": r[1],
+            "material_description": r[2],
+            "material_group": r[3]
+        }
+        for r in rows
+    ]
+
+    return render(request, 'list_product.html', {"products": products})
 
 
 # ================================
@@ -166,21 +226,34 @@ def list_product(request):
 # ================================
 @custom_login_required
 def product_detail(request, id):
-    product = CoreProduct.objects.using('oracle_prod').get(id=id)
-    return render(request, 'product_detail.html', {'product': product})
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM core_product WHERE id = :1", [id])
+    row = cursor.fetchone()
+
+    columns = [col[0].lower() for col in cursor.description]
+    product = dict(zip(columns, row)) if row else None
+
+    cursor.close()
+    conn.close()
+
+    return render(request, 'product_detail.html', {"product": product})
+
 
 # ================================
-# GET DATA
+# GET MATERIAL DATA
 # ================================
-
 @custom_login_required
 def get_material_data(request):
+
     material_number = request.GET.get("material_number")
 
-    if not material_number:
-        return JsonResponse({"error": "Material number kosong"}, status=400)
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    query = """
+    cursor.execute("""
         select * from (SELECT DISTINCT
             TRIM(TO_CHAR(TO_NUMBER(A.MATERIAL_NUMBER))) AS MATERIAL_NUMBER,
             A.MATERIAL_DESCRIPTION,
@@ -197,12 +270,13 @@ def get_material_data(request):
             SELECT DISTINCT MATERIAL, SALES_UNIT 
             FROM datagate.mvke@datagate
         ) B ON A.MATERIAL_NUMBER = B.MATERIAL)
-        WHERE MATERIAL_NUMBER = :material_number
-    """
+        WHERE MATERIAL_NUMBER = :1
+    """, [material_number])
 
-    with connections['oracle_prod'].cursor() as cursor:
-        cursor.execute(query, {"material_number": material_number})
-        row = cursor.fetchone()
+    row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
 
     if not row:
         return JsonResponse({"error": "Material tidak ditemukan"}, status=404)
@@ -219,46 +293,53 @@ def get_material_data(request):
         "width": row[8],
         "height": row[9],
     })
-    
+
+
+# ================================
+# EDIT PRODUCT
+# ================================
 @custom_login_required
 def edit_product(request, id):
 
-    product = CoreProduct.objects.using('oracle_prod').get(id=id)
+    conn = get_connection()
+    cursor = conn.cursor()
 
     if request.method == "POST":
-        try:
-            with transaction.atomic(using='oracle_prod'):
 
-                # UPDATE FIELD KUNING
-                product.qty_in_pallet = request.POST.get('qty_in_pallet') or None
-                product.qty_in_layers = request.POST.get('qty_in_layers') or None
-                product.qty_layers = request.POST.get('qty_layers') or None
+        image_3d = upload_to_api(request.FILES['image_3d']) if request.FILES.get('image_3d') else None
+        image_bird = upload_to_api(request.FILES['image_bird']) if request.FILES.get('image_bird') else None
+        image_carton = upload_to_api(request.FILES['image_carton']) if request.FILES.get('image_carton') else None
 
-                # === HANDLE IMAGE REPLACE ===
+        cursor.execute("""
+            UPDATE core_product
+            SET qty_in_pallet = :1,
+                qty_in_layers = :2,
+                qty_layers = :3,
+                image_3d = NVL(:4, image_3d),
+                image_bird = NVL(:5, image_bird),
+                image_carton = NVL(:6, image_carton)
+            WHERE id = :7
+        """, [
+            request.POST.get('qty_in_pallet') or None,
+            request.POST.get('qty_in_layers') or None,
+            request.POST.get('qty_layers') or None,
+            image_3d,
+            image_bird,
+            image_carton,
+            id
+        ])
 
-                if request.FILES.get('image_3d'):
-                    new_url = upload_to_api(request.FILES['image_3d'])
-                    if not new_url:
-                        raise Exception("Upload 3D gagal")
-                    product.image_3d = new_url
+        conn.commit()
+        messages.success(request, "Data berhasil diupdate.")
+        return redirect('list_product')
 
-                if request.FILES.get('image_bird'):
-                    new_url = upload_to_api(request.FILES['image_bird'])
-                    if new_url:
-                        product.image_bird = new_url
+    cursor.execute("SELECT * FROM core_product WHERE id = :1", [id])
+    row = cursor.fetchone()
+    columns = [col[0].lower() for col in cursor.description]
+    product = dict(zip(columns, row)) if row else None
 
-                if request.FILES.get('image_carton'):
-                    new_url = upload_to_api(request.FILES['image_carton'])
-                    if new_url:
-                        product.image_carton = new_url
-
-                product.save(using='oracle_prod')
-
-            messages.success(request, "Data berhasil diupdate.")
-            return redirect('list_product')
-
-        except Exception as e:
-            messages.error(request, f"Gagal update: {str(e)}")
+    cursor.close()
+    conn.close()
 
     return render(request, "config_product.html", {
         "product": product,

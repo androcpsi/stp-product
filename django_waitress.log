@@ -1,0 +1,62 @@
+2026-02-25 15:49:48,942 Server started
+2026-02-25 15:49:48,951 Serving on http://0.0.0.0:8080
+2026-02-25 15:56:36,548 Server started
+2026-02-25 15:56:36,555 Serving on http://0.0.0.0:8080
+2026-02-25 15:57:36,119 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-25 15:57:36,822 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 153
+2026-02-25 15:57:36,826 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-25 15:57:37,541 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 151
+2026-02-25 15:57:37,545 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-25 15:57:38,262 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 156
+2026-02-25 16:16:47,849 Server started
+2026-02-25 16:16:47,855 Serving on http://0.0.0.0:8080
+2026-02-25 16:18:25,618 Server started
+2026-02-25 16:18:25,625 Serving on http://0.0.0.0:8080
+2026-02-25 16:23:08,525 Server started
+2026-02-25 16:23:08,530 Serving on http://0.0.0.0:8080
+2026-02-25 16:30:22,561 Server started
+2026-02-25 16:30:22,567 Serving on http://0.0.0.0:8080
+2026-02-25 18:00:39,354 Server started
+2026-02-25 18:00:39,359 Serving on http://0.0.0.0:8080
+2026-02-26 08:02:35,474 Server started
+2026-02-26 08:02:35,479 Serving on http://0.0.0.0:8080
+2026-02-26 09:26:56,466 Server started
+2026-02-26 09:26:56,473 Serving on http://0.0.0.0:8080
+2026-02-26 09:27:17,191 Not Found: /favicon.ico
+2026-02-26 09:27:22,651 Invalid HTTP_HOST header: 'xpiapps.diamond.co.id:8080'. You may need to add 'xpiapps.diamond.co.id' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "C:\Users\andro.sidabutar\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\andro.sidabutar\AppData\Roaming\Python\Python314\site-packages\django\utils\deprecation.py", line 308, in __call__
+    response = self.process_request(request)
+  File "C:\Users\andro.sidabutar\AppData\Roaming\Python\Python314\site-packages\django\middleware\common.py", line 48, in process_request
+    host = request.get_host()
+  File "C:\Users\andro.sidabutar\AppData\Roaming\Python\Python314\site-packages\django\http\request.py", line 205, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'xpiapps.diamond.co.id:8080'. You may need to add 'xpiapps.diamond.co.id' to ALLOWED_HOSTS.
+2026-02-26 09:27:23,491 Invalid HTTP_HOST header: 'xpiapps.diamond.co.id:8080'. You may need to add 'xpiapps.diamond.co.id' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "C:\Users\andro.sidabutar\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\andro.sidabutar\AppData\Roaming\Python\Python314\site-packages\django\utils\deprecation.py", line 308, in __call__
+    response = self.process_request(request)
+  File "C:\Users\andro.sidabutar\AppData\Roaming\Python\Python314\site-packages\django\middleware\common.py", line 48, in process_request
+    host = request.get_host()
+  File "C:\Users\andro.sidabutar\AppData\Roaming\Python\Python314\site-packages\django\http\request.py", line 205, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'xpiapps.diamond.co.id:8080'. You may need to add 'xpiapps.diamond.co.id' to ALLOWED_HOSTS.
+2026-02-26 09:34:19,386 Not Found: /favicon.ico
+2026-02-26 09:59:27,619 Not Found: /favicon.ico
+2026-02-26 10:08:58,906 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-26 10:08:59,641 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 171
+2026-02-26 10:08:59,645 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-26 10:09:00,495 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 171
+2026-02-26 10:09:00,501 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-26 10:09:01,307 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 171
+2026-02-26 10:13:51,039 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-26 10:13:51,753 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 171
+2026-02-26 10:13:51,757 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-26 10:13:52,458 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 171
+2026-02-26 10:13:52,465 Starting new HTTPS connection (1): api-storage.diamond.co.id:443
+2026-02-26 10:13:53,199 https://api-storage.diamond.co.id:443 "POST /v1/uploadFiles HTTP/1.1" 200 171
+2026-02-26 11:16:22,934 Not Found: /favicon.ico

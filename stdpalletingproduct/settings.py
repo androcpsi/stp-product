@@ -14,6 +14,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 import os
+import oracledb
+oracledb.defaults.fetch_lobs = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,7 +30,11 @@ SECRET_KEY = 'django-insecure-0oga47u*#uj-s$vdvz!es1m=a2(iy%5z%_4v21mq1uhew-po+f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "stpproduct.diamond.co.id",
+    "10.100.4.77",
+    "localhost"
+]
 
 DATABASE_ROUTERS = ['core.db_router.OracleRouter']
 
@@ -87,15 +93,6 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
-
-    'oracle_prod': {
-        'ENGINE': 'django.db.backends.oracle',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-    }
 }
 
 

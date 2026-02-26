@@ -1,6 +1,6 @@
 import requests
 
-API_URL = "https://api-storage-dev.diamond.co.id/v1/uploadFiles"
+API_URL = "https://api-storage.diamond.co.id/v1/uploadFiles"
 BEARER_TOKEN = "RElHSVRBTDpkb2NkaWdpdGFsMjAyNQ=="
 
 def upload_to_api(uploaded_file):
