@@ -11,18 +11,17 @@ from services.oracle_service import get_connection
 # LOGIN
 # ================================
 def login_view(request):
-
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
 
-        # 1️⃣ cek user ke Oracle (RAW QUERY)
+        # 1️⃣ Cek user ke Oracle (RAW QUERY)
         try:
             conn = get_connection()
             cursor = conn.cursor()
 
             cursor.execute("""
-                SELECT id, email, role
+                SELECT id, email, role, name
                 FROM mst_user
                 WHERE email = :1 
             """, [email])
@@ -35,11 +34,18 @@ def login_view(request):
                 messages.error(request, "User tidak terdaftar di sistem.")
                 return redirect('login')
 
+            # Pastikan session diset dengan benar
+            request.session['user_id'] = row[0]
+            request.session['email'] = row[1]
+            request.session['role'] = row[2]  # Diset sesuai dengan role dari database
+            request.session['name'] = row[3]  
+            print(f"Session set: {request.session.get('email')}, {request.session.get('name')}")  # Debugging
+
         except Exception as e:
             messages.error(request, f"Error database: {str(e)}")
             return redirect('login')
 
-        # 2️⃣ cek AD
+        # 2️⃣ Cek AD (untuk selain admin, jika perlu)
         server = Server('10.100.5.116', port=389)
 
         try:
@@ -48,15 +54,9 @@ def login_view(request):
             messages.error(request, "Username atau password salah.")
             return redirect('login')
 
-        # 3️⃣ set session
-        request.session['user_id'] = row[0]
-        request.session['email'] = row[1]
-        request.session['role'] = row[2]
-
         return redirect('dashboard')
 
     return render(request, 'login.html')
-
 
 # ================================
 # LOGOUT
@@ -81,7 +81,6 @@ def custom_login_required(view_func):
 # DASHBOARD
 # ================================
 @custom_login_required
-@custom_login_required
 def dashboard(request):
 
     conn = get_connection()
@@ -93,18 +92,49 @@ def dashboard(request):
     rows = cursor.fetchall()
     products = [dict(zip(columns, row)) for row in rows]
 
-    # Hitung total langsung dari DB
+    # Hitung total produk yang sudah diisi
     cursor.execute("SELECT COUNT(*) FROM core_product")
     total_product = cursor.fetchone()[0]
+
+    # Hitung total produk yang belum diisi
+    cursor.execute("""
+        SELECT COUNT(0) AS COUNTDATA
+        FROM (SELECT DISTINCT
+            TRIM(TO_CHAR(TO_NUMBER(A.MATERIAL_NUMBER))) AS MATERIAL_NUMBER,
+            A.MATERIAL_DESCRIPTION,
+            A.MATERIAL_GROUP,
+            A.BASE_UOM AS BASE_UNIT,
+            A.ORDER_UNIT,
+            B.SALES_UNIT,
+            A.PACK_SIZE_OLD,
+            A.LENGTH,
+            A.WIDTH,
+            A.HEIGHT
+        FROM datagate.mara@datagate A
+        LEFT JOIN (
+            SELECT DISTINCT MATERIAL, SALES_UNIT 
+            FROM datagate.mvke@datagate
+        ) B ON A.MATERIAL_NUMBER = B.MATERIAL
+        WHERE a.material_type IN ('ZFGD','ZTRD')
+        )
+    """)
+    total_not_filled_product = cursor.fetchone()[0]
 
     cursor.close()
     conn.close()
 
+     # Menghitung persentase produk yang belum diisi
+    if total_product + total_not_filled_product != 0:  # Menghindari pembagian dengan 0
+        percentage_not_filled = (total_not_filled_product / (total_product + total_not_filled_product)) * 100
+    else:
+        percentage_not_filled = 0
+
     return render(request, 'dashboard.html', {
         'products': products,
-        'total_product': total_product
+        'total_product': total_product,
+        'total_not_filled_product': total_not_filled_product,
+        'percentage_not_filled': percentage_not_filled,
     })
-
 
 # ================================
 # CONFIG PRODUCT
@@ -345,3 +375,32 @@ def edit_product(request, id):
         "product": product,
         "is_edit": True
     })
+    
+# Fungsi untuk menghapus produk menggunakan query Oracle
+@custom_login_required
+def delete_product(request, id):
+    try:
+        # Mengambil koneksi ke database Oracle
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Query untuk menghapus produk berdasarkan ID
+        cursor.execute("""
+            DELETE FROM core_product
+            WHERE id = :1
+        """, [id])
+
+        # Commit perubahan ke database
+        conn.commit()
+
+        # Menutup koneksi
+        cursor.close()
+        conn.close()
+
+        # Menampilkan pesan sukses
+        messages.success(request, "Produk berhasil dihapus.")
+    except Exception as e:
+        messages.error(request, f"Gagal menghapus produk: {str(e)}")
+
+    # Redirect kembali ke halaman list produk setelah penghapusan
+    return redirect('list_product')    
